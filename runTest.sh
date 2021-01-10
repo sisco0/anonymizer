@@ -1,1 +1,1 @@
-LD_LIBRARY_PATH=/usr/local/cuda-10.1/lib PYTHONPATH=$PYTHONPATH:. python anonymizer/bin/anonymize.py --input gothru-images --image-output gothru-output-images --weights weights --cubemap True --face-threshold 0.005 --plate-threshold 0.005 
+LD_LIBRARY_PATH=/usr/local/cuda-10.1/lib PYTHONPATH=$PYTHONPATH:. python anonymizer/bin/anonymize.py --input gothru-images --image-output gothru-output-images --weights weights --cubemap True --face-threshold 0.09 --plate-threshold 0.09 

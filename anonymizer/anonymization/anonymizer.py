@@ -5,6 +5,8 @@ import numpy as np
 from PIL import Image
 from tqdm import tqdm
 
+from anonymizer.utils import Box
+
 
 def load_np_image(image_path):
     image = Image.open(image_path).convert('RGB')
@@ -45,16 +47,20 @@ class Anonymizer:
             w, h, _ = np.shape(image)
             # Split cubemap into pieces
             piecesRects = [
-                [0, 0, w//3, h], # Large front face
-                [w//3, 0, 2*w//3, h//2], # Back face
-                [2*w//3, 0, w, h//2], # Top face (Superman!)
-                [w//3, h//2, w, h], # Right face
-                [2*w//3, h//2, w, h] # Left face
+                [0, 0, w/3, h], # Large front face
+                [w/3, 0, 2*w/3, h/2], # Back face
+                [2*w/3, 0, w, h/2], # Top face (Superman!)
+                [w/3, h/2, 2*w/3, h], # Right face
+                [2*w/3, h/2, w, h] # Left face
             ]
-            for rect in piecesRects:
-                piece = image[rect[1]:rect[3], rect[0]:rect[2]]
+            for idx, rect in enumerate(piecesRects):
+                print(np.shape(image))
+                piece = image[round(rect[1]):round(rect[3]), round(rect[0]):round(rect[2])]
                 obfuscated_piece, piece_detected_boxes = self.anonymize_image(piece, detection_thresholds, False)
                 print(piece_detected_boxes)
+                import pdb; pdb.set_trace();
+                detected_boxes = detected_boxes + [box + Box(rect[1], rect[0], rect[1], rect[0], 0.0, "face")
+                        for box in piece_detected_boxes]
             # TODO Remove this and change!
             return self.obfuscator.obfuscate(image, detected_boxes), detected_boxes
         else:
