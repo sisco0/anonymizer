@@ -25,6 +25,10 @@ from anonymizer.obfuscation import Obfuscator
 def parse_args():
     parser = argparse.ArgumentParser(
         description='Anonymize faces and license plates in a series of images.')
+    parser.add_argument('--cubemap', required=False, default=False,
+                        metavar='False',
+                        help='Boolean for using or not using cubemap as image inputs. '
+                             'Where cubemap are stored using [Front1, Back, Top], [Front2, Right, Left] format.')
     parser.add_argument('--input', required=True,
                         metavar='/path/to/input_folder',
                         help='Path to a folder that contains the images that should be anonymized. '
@@ -63,6 +67,7 @@ def parse_args():
                              'transition. Both kernel sizes must be odd numbers.')
     args = parser.parse_args()
 
+    print(f'cubemap: {args.cubemap}')
     print(f'input: {args.input}')
     print(f'image-output: {args.image_output}')
     print(f'weights: {args.weights}')
@@ -77,7 +82,7 @@ def parse_args():
 
 
 def main(input_path, image_output_path, weights_path, image_extensions, face_threshold, plate_threshold,
-         write_json, obfuscation_parameters):
+         write_json, obfuscation_parameters, cubemap):
     download_weights(download_directory=weights_path)
 
     kernel_size, sigma, box_kernel_size = obfuscation_parameters.split(',')
@@ -93,7 +98,7 @@ def main(input_path, image_output_path, weights_path, image_extensions, face_thr
     anonymizer = Anonymizer(obfuscator=obfuscator, detectors=detectors)
     anonymizer.anonymize_images(input_path=input_path, output_path=image_output_path,
                                 detection_thresholds=detection_thresholds, file_types=image_extensions.split(','),
-                                write_json=write_json)
+                                write_json=write_json, cubemap=cubemap)
 
 
 if __name__ == '__main__':
@@ -101,4 +106,4 @@ if __name__ == '__main__':
     main(input_path=args.input, image_output_path=args.image_output, weights_path=args.weights,
          image_extensions=args.image_extensions,
          face_threshold=args.face_threshold, plate_threshold=args.plate_threshold,
-         write_json=args.write_detections, obfuscation_parameters=args.obfuscation_kernel)
+         write_json=args.write_detections, obfuscation_parameters=args.obfuscation_kernel, cubemap=args.cubemap)

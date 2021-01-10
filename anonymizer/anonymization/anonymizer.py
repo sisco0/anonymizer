@@ -37,16 +37,33 @@ class Anonymizer:
         self.detectors = detectors
         self.obfuscator = obfuscator
 
-    def anonymize_image(self, image, detection_thresholds):
+    def anonymize_image(self, image, detection_thresholds, cubemap=False):
         assert set(self.detectors.keys()) == set(detection_thresholds.keys()),\
             'Detector names must match detection threshold names'
         detected_boxes = []
-        for kind, detector in self.detectors.items():
-            new_boxes = detector.detect(image, detection_threshold=detection_thresholds[kind])
-            detected_boxes.extend(new_boxes)
-        return self.obfuscator.obfuscate(image, detected_boxes), detected_boxes
+        if cubemap:
+            w, h, _ = np.shape(image)
+            # Split cubemap into pieces
+            piecesRects = [
+                [0, 0, w//3, h], # Large front face
+                [w//3, 0, 2*w//3, h//2], # Back face
+                [2*w//3, 0, w, h//2], # Top face (Superman!)
+                [w//3, h//2, w, h], # Right face
+                [2*w//3, h//2, w, h] # Left face
+            ]
+            for rect in piecesRects:
+                piece = image[rect[1]:rect[3], rect[0]:rect[2]]
+                obfuscated_piece, piece_detected_boxes = self.anonymize_image(piece, detection_thresholds, False)
+                print(piece_detected_boxes)
+            # TODO Remove this and change!
+            return self.obfuscator.obfuscate(image, detected_boxes), detected_boxes
+        else:
+            for kind, detector in self.detectors.items():
+                new_boxes = detector.detect(image, detection_threshold=detection_thresholds[kind])
+                detected_boxes.extend(new_boxes)
+            return self.obfuscator.obfuscate(image, detected_boxes), detected_boxes
 
-    def anonymize_images(self, input_path, output_path, detection_thresholds, file_types, write_json):
+    def anonymize_images(self, input_path, output_path, detection_thresholds, file_types, write_json, cubemap):
         print(f'Anonymizing images in {input_path} and saving the anonymized images to {output_path}...')
 
         Path(output_path).mkdir(exist_ok=True)
@@ -65,7 +82,7 @@ class Anonymizer:
 
             # Anonymize image
             image = load_np_image(str(input_image_path))
-            anonymized_image, detections = self.anonymize_image(image=image, detection_thresholds=detection_thresholds)
+            anonymized_image, detections = self.anonymize_image(image=image, detection_thresholds=detection_thresholds, cubemap=cubemap)
             save_np_image(image=anonymized_image, image_path=str(output_image_path))
             if write_json:
                 save_detections(detections=detections, detections_path=str(output_detections_path))
